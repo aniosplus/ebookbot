@@ -9,7 +9,9 @@ import os
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# 🔑 OpenRouter ayarları
+openai.api_key = os.getenv("OPENROUTER_API_KEY")
+openai.api_base = "https://openrouter.ai/api/v1"
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -18,13 +20,16 @@ async def index(request: Request):
 @app.post("/generate", response_class=HTMLResponse)
 async def generate(request: Request, topic: str = Form(...)):
     prompt = f"Lütfen '{topic}' hakkında 1500 kelimelik, profesyonel ve bölümlere ayrılmış bir e-kitap yaz."
+
+    # 💬 OpenRouter destekli model ile isteği gönderiyoruz
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="openrouter/openchat",  # dilersen başka model de seçebiliriz
         messages=[{"role": "user", "content": prompt}]
     )
 
     content = response['choices'][0]['message']['content']
 
+    # 📄 PDF oluşturuluyor
     filename = f"{uuid.uuid4()}.pdf"
     pdf = FPDF()
     pdf.add_page()
